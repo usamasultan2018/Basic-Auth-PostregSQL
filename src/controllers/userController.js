@@ -12,8 +12,11 @@ const getUserProfile = async (req, res) => {
             });
         }
 
-        res.status(StatusCodes.OK).json({ user });
-    } catch (error) {
+        res.status(StatusCodes.OK).json({ 
+            message: "User profile fetched successfully", 
+            user,
+          });
+              } catch (error) {
         console.error("Get Profile Error:", error);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             message: "Internal server error.",
