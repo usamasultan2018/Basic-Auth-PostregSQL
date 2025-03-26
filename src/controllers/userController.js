@@ -1,5 +1,7 @@
 const User = require("../models/User");
 const { StatusCodes } = require("http-status-codes");
+const cloudinary = require("../config/cloudinary");
+
 
 const getUserProfile = async (req, res) => {
     try {
@@ -26,17 +28,48 @@ const getUserProfile = async (req, res) => {
 
 const updateUserProfile = async (req, res) => {
     try {
+        console.log("Request Body:", req.body);
+        console.log("Uploaded File:", req.file);
         const userId = req.user.id;
-        const { name, email } = req.body;
+        const file = req.file;
 
+        const { name} = req.body;
+
+
+        let imageUrl;
+        if (file) {
+            const uploadPromise = new Promise((resolve, reject) => {
+                const stream = cloudinary.uploader.upload_stream(
+                    {
+                        folder: "auth_profile",
+                        public_id: `profile_${userId}`,
+                        overwrite: true,
+                        transformation: [{ width: 300, height: 300, crop: "fill" }],
+                    },
+                    (error, result) => {
+                        if (error) {
+                            console.error("Cloudinary Upload Error:", error);
+                            reject(error);
+                        } else {
+                            resolve(result.secure_url);
+                        }
+                    }
+
+                );
+                stream.end(file.buffer);
+
+            });
+            imageUrl = await uploadPromise;
+
+        }
         const updatedUser = await User.findByIdAndUpdate(userId,
             {
-                name, email
+                name, profileImage: imageUrl
             },
             {
                 new: true,
                 runValidators: true,
-              
+
             },
         ).select("-password");;
         if (!updatedUser) {
@@ -59,4 +92,4 @@ const updateUserProfile = async (req, res) => {
 }
 
 
-module.exports = { getUserProfile,updateUserProfile  };
+module.exports = { getUserProfile, updateUserProfile };
