@@ -12,11 +12,11 @@ const getUserProfile = async (req, res) => {
             });
         }
 
-        res.status(StatusCodes.OK).json({ 
-            message: "User profile fetched successfully", 
+        res.status(StatusCodes.OK).json({
+            message: "User profile fetched successfully",
             user,
-          });
-              } catch (error) {
+        });
+    } catch (error) {
         console.error("Get Profile Error:", error);
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             message: "Internal server error.",
@@ -24,5 +24,39 @@ const getUserProfile = async (req, res) => {
     }
 };
 
+const updateUserProfile = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { username, email } = req.body;
 
-module.exports = { getUserProfile };
+        const updatedUser = await User.findByIdAndUpdate(userId,
+            {
+                username, email
+            },
+            {
+                new: true,
+                runValidators: true,
+              
+            },
+        ).select("-password");;
+        if (!updatedUser) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                message: "User not found.",
+            });
+        }
+        res.status(StatusCodes.OK).json({
+            message: "User profile updated successfully",
+            user: updatedUser,
+        });
+
+    }
+    catch (error) {
+        console.error("PUT Updating Error:", error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            message: "Internal server error.",
+        });
+    }
+}
+
+
+module.exports = { getUserProfile,updateUserProfile  };
